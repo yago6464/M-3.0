@@ -1,0 +1,1797 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10131f">
+  <meta name="description" content="Catálogo pessoal de jogos salvo localmente no celular.">
+  <title>M+</title>
+  <link rel="icon" href="./icon-512.png?v=4" type="image/png">
+  <link rel="apple-touch-icon" href="./icon-512.png?v=4">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07050d;
+      --panel: #130b20;
+      --panel-2: #241436;
+      --text: #f5f7ff;
+      --muted: #c7b9d9;
+      --line: rgba(167, 111, 255, 0.18);
+      --accent: #7b2cff;
+      --accent-2: #b48cff;
+      --danger: #ff5c7a;
+      --shadow: 0 22px 60px rgba(0, 0, 0, 0.58);
+      --radius: 16px;
+      --radius-lg: 28px;
+      --transition: 0.2s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, #1a0b2e 0%, #2d1a3f 52%, #4f3268 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+      border: 0;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      outline: none;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(100%, 980px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 18px 16px 92px;
+      contain: layout style;
+    }
+
+    /* Views */
+    .view {
+      display: none;
+      animation: show 0.18s ease-out;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes show {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Home */
+    #homeView { padding: 16px; }
+    .home-title { margin: 0 0 12px; font-size: 1.5rem; letter-spacing: -0.04em; text-align: center; }
+
+    /* Toolbar */
+    .toolbar { display: flex; align-items: center; gap: 8px; margin: 18px 0; position: relative; }
+    .toolbar .search {
+      flex: 1; min-width: 0; padding-left: 40px; padding-right: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M9.5 3a6.5 6.5 0 0 1 5.15 10.47l4.44 4.44-1.42 1.42-4.44-4.44A6.5 6.5 0 1 1 9.5 3m0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9'/%3E%3E/svg%3E");
+      background-repeat: no-repeat; background-position: 12px center; background-size: 16px;
+      transition: width 0.22s ease, padding-right 0.22s ease;
+    }
+    .toolbar .search:focus { width: 100%; max-width: 280px; flex: 0 0 auto; }
+    .search,
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%; border: 1px solid var(--line); border-radius: var(--radius-lg);
+      background: rgba(19, 11, 32, 0.86); color: var(--text);
+      padding: 12px 16px; font-size: 0.9rem;
+    }
+    .search {
+      padding: 12px 16px; border-color: rgba(180, 140, 255, 0.32);
+      background: rgba(7, 5, 13, 0.92); box-shadow: 0 0 0 4px rgba(123, 44, 255, 0.08);
+    }
+
+    /* Grid & Cards */
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 135px)); justify-content: center; gap: 12px; }
+    .card { position: relative; aspect-ratio: 2 / 3; border-radius: 24px; overflow: hidden; background: transparent; transition: border-color 0.15s ease, transform 0.15s ease; will-change: transform; }
+    .card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(7, 5, 13, 0.78), rgba(7, 5, 13, 0.08) 58%, transparent); pointer-events: none; }
+    .card:hover { border-color: rgba(180, 140, 255, 0.58); transform: translateY(-2px); }
+    .cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: linear-gradient(135deg, #281044, #08050d); display: block; opacity: 0.88; filter: saturate(0.96) contrast(0.92); }
+    .card-body { position: absolute; inset: auto 0 0; z-index: 1; padding: 42px 10px 10px; }
+    .card h3 { margin: 0; color: #fff; font-size: clamp(0.82rem, 2.7vw, 1.05rem); line-height: 1.05; letter-spacing: -0.03em; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72); }
+
+    .card-badges { position: absolute; top: 8px; right: 8px; z-index: 2; display: flex; flex-direction: row; align-items: flex-end; gap: 0; }
+    .card-badges .badge + .badge { margin-left: -7px; }
+    .card-badges .badge { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 28px; min-width: 28px; height: 28px; padding: 0; border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 999px; color: #fff; font-size: 0.74rem; font-weight: 900; line-height: 1; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28); backdrop-filter: blur(10px); }
+    .badge svg { width: 15px; height: 15px; display: block; }
+    .badge.rating { background: #7b2cff; }
+    .badge.jogado { background: #21ab5c; }
+    .badge.quero-jogar { background: #ff8b24; }
+    .badge.jogando { background: #2176ff; }
+    .badge.desistido { background: #dc143c; }
+    .badge.favorite { background: #fff; color: #ff304f; }
+
+    /* List search */
+    .list-search { position: relative; display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .search.list-search-input { flex: 1; min-width: 0; width: 100%; height: 36px; padding: 0 12px 0 36px; border-color: rgba(255, 255, 255, 0.08); border-radius: 999px; background-color: rgba(0, 0, 0, 0.58); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M9.5 3a6.5 6.5 0 0 1 5.15 10.47l4.44 4.44-1.42 1.42-4.44-4.44A6.5 6.5 0 1 1 9.5 3m0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9'/%3E%3E/svg%3E"); background-repeat: no-repeat; background-position: 11px center; background-size: 16px; box-shadow: none; cursor: pointer; transition: width 0.22s ease, background-color 0.22s ease; }
+    .search.list-search-input::placeholder { color: transparent; }
+    .search.list-search-input:focus { position: absolute; left: 0; right: 0; z-index: 10; width: calc(100% + 120px); background-color: rgba(0, 0, 0, 0.85); cursor: text; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+    .search.list-search-input:focus::placeholder { color: rgba(255, 255, 255, 0.52); }
+
+    /* Buttons */
+    .btn { padding: 12px 14px; border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--accent), #4b168e); color: #fff; font-weight: 800; transition: transform 0.15s ease, background 0.15s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.secondary { background: var(--panel-2); color: var(--text); }
+    .btn.danger { background: #dc143c; color: #fff; }
+    .btn.transparent { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    .btn.full { width: 100%; }
+
+    /* List */
+    .status-list { display: grid; gap: 16px; }
+    .list-tabs { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
+    .list-tab { flex: 0 0 auto; padding: 10px 6px 12px; border-radius: 999px; background: transparent; color: rgba(255, 255, 255, 0.52); font-size: 0.82rem; font-weight: 800; white-space: nowrap; }
+    .list-tab.active { color: #fff; text-shadow: 0 0 6px rgba(180, 140, 255, 0.36); }
+    .list-tab.active::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 3px; height: 3px; border-radius: 999px; background: #b48cff; box-shadow: 0 0 6px rgba(180, 140, 255, 0.4); }
+
+    /* Detail */
+    .detail-view { padding-bottom: 18px; }
+    .detail-view.active { animation: detailIn 0.24s ease both; }
+    @keyframes detailIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-banner { position: relative; min-height: 390px; border-radius: 32px; overflow: hidden; background: radial-gradient(circle at 20% 0%, rgba(180, 140, 255, 0.32), transparent 34%), linear-gradient(135deg, #13091f, #3b2158 58%, #07050d); box-shadow: 0 28px 80px rgba(0, 0, 0, 0.48); }
+    .detail-banner img { width: 100%; height: 390px; object-fit: cover; display: block; opacity: 0.88; }
+    .detail-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 4, 14, 0.98), rgba(8, 4, 14, 0.32) 52%, rgba(8, 4, 14, 0.08)), linear-gradient(110deg, rgba(123, 44, 255, 0.24), transparent 46%); pointer-events: none; }
+    .detail-back,
+    .detail-edit-banner { position: absolute; z-index: 2; top: 14px; width: 42px; height: 42px; border-radius: 999px; background: rgba(0, 0, 0, 0.48); color: #fff; font-weight: 900; backdrop-filter: blur(14px); }
+    .detail-back { left: 14px; }
+    .detail-edit-banner { right: 14px; }
+    .detail-content { margin-top: -96px; position: relative; z-index: 1; padding: 0 14px 18px; }
+    .detail-title { margin: 0 0 14px; color: #fff; font-size: clamp(2rem, 8vw, 4rem); line-height: 0.92; letter-spacing: -0.07em; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.58); }
+    .detail-synopsis { margin: 0; max-width: 720px; color: rgba(255, 255, 255, 0.76); font-size: 0.98rem; line-height: 1.55; }
+    .detail-links { display: none; margin-top: 18px; }
+    .detail-links.active { display: block; }
+    .detail-link { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 12px 15px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px; background: rgba(255, 255, 255, 0.09); color: #fff; font-size: 0.88rem; font-weight: 900; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; backdrop-filter: blur(16px); }
+    .detail-link:hover { background: rgba(255, 255, 255, 0.15); }
+    .detail-section-title,
+    .detail-links-title { color: #fff; font-size: 1rem; font-weight: 950; letter-spacing: -0.02em; }
+    .detail-section-title { margin: 24px 0 8px; }
+    .detail-links-title { margin: 18px 0 8px; }
+    .detail-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .detail-pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.86); font-size: 0.82rem; font-weight: 900; backdrop-filter: blur(16px); }
+    .detail-actions { position: relative; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+    .detail-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 124px; min-width: 124px; height: 54px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(0, 0, 0, 0.48); color: #fff; backdrop-filter: blur(14px); box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2); transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease; }
+    .detail-action:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
+    .detail-action svg { width: 24px; height: 24px; flex: 0 0 auto; }
+    .detail-action-label { font-size: 0.84rem; font-weight: 900; white-space: nowrap; }
+    .detail-action.favorite.active { color: #ff304f; }
+    .detail-action.danger { color: #ff7b91; }
+    .detail-action.danger:hover { background: rgba(255, 48, 79, 0.16); color: #ff304f; }
+    .detail-action.disabled { opacity: 0.4; pointer-events: none; }
+
+    /* Widgets */
+    .status-widget,
+    .tags-widget,
+    .rating-widget { position: absolute; top: 62px; z-index: 4; display: none; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(9, 5, 16, 0.88); box-shadow: 0 22px 60px rgba(0, 0, 0, 0.48); backdrop-filter: blur(18px); }
+    .status-widget { left: 78px; min-width: 210px; padding: 8px; }
+    .status-widget.open { display: grid; gap: 6px; }
+    .status-widget button { padding: 11px 12px; border-radius: 14px; background: transparent; color: #fff; text-align: left; font-weight: 800; width: 100%; }
+    .status-widget button:hover { background: rgba(255, 255, 255, 0.1); }
+    .status-widget button.active { background: linear-gradient(135deg, rgba(123, 44, 255, 0.92), rgba(180, 140, 255, 0.78)); }
+    .rating-widget { left: 0; grid-template-columns: repeat(5, 38px); gap: 8px; padding: 10px; }
+    .rating-widget.open { display: grid; }
+    .rating-widget.disabled { opacity: 0.4; pointer-events: none; }
+    .rating-star { position: relative; width: 38px; height: 38px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); font-size: 1.25rem; line-height: 1; overflow: hidden; }
+    .rating-star::before,
+    .rating-star-fill { content: "★"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .rating-star::before { color: rgba(255, 255, 255, 0.28); }
+    .rating-star-fill { width: 0; overflow: hidden; color: #ffd45c; justify-content: flex-start; padding-left: 9px; white-space: nowrap; }
+    .tags-widget { left: 252px; max-width: min(100%, 360px); grid-template-columns: repeat(auto-fit, minmax(86px, max-content)); gap: 8px; padding: 10px; }
+    .tags-widget.open { display: grid; }
+    .tag-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 0.82rem; font-weight: 900; }
+
+    .status-box { padding: 0; border: 0; border-radius: 0; background: transparent; }
+    .status-box h2,
+    .section-title { margin: 0 0 12px; font-size: 1.25rem; }
+    .panel { padding: 18px; border-radius: var(--radius-lg); background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.06); }
+    #backupPanel { margin-top: 16px; }
+    #backupForm { margin-top: 14px; }
+
+    .form { display: grid; gap: 14px; }
+    .field label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 0.88rem; font-weight: 800; }
+    .field input,
+    .field textarea,
+    .field select { padding: 13px 14px; }
+    .field textarea { min-height: 96px; resize: vertical; }
+
+    .cover-thumbnail { display: none; text-align: center; }
+    .cover-thumbnail img { width: 120px; height: 160px; object-fit: cover; border-radius: 16px; border: 1px solid var(--line); cursor: pointer; }
+    .cover-thumbnail .note { margin-top: 8px; }
+
+    .favorite-toggle { display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; border: 1px solid var(--line); border-radius: 18px; background: rgba(19, 11, 32, 0.86); cursor: pointer; }
+    .favorite-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .favorite-toggle svg { width: 30px; height: 30px; }
+    .favorite-toggle .heart { fill: transparent; stroke: #fff; stroke-width: 2.2; transition: fill 0.15s ease, stroke 0.15s ease, transform 0.15s ease; }
+    .favorite-toggle input:checked + svg .heart { fill: #ff304f; stroke: #ff304f; transform: scale(1.06); transform-origin: center; }
+
+    /* Cover Editor - Otimizado */
+    .cover-editor { display: none; gap: 14px; justify-items: center; padding: 14px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--radius-lg); background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)); }
+    .cover-frame { position: relative; width: min(100%, 300px); aspect-ratio: 1 / 1; border-radius: 22px; overflow: hidden; background: #05030a; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18), 0 18px 45px rgba(0, 0, 0, 0.35); cursor: grab; touch-action: none; user-select: none; }
+    #bannerFrame { aspect-ratio: 3 / 1; width: min(100%, 600px); }
+    .cover-frame:active { cursor: grabbing; }
+    .cover-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform-origin: center; pointer-events: none; will-change: transform; }
+    .cover-crop { position: absolute; left: 50%; top: 50%; z-index: 3; width: 210px; aspect-ratio: 3 / 4; border: 2px solid rgba(255, 255, 255, 0.92); border-radius: 18px; background:
+        linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)) 33.33% 0 / 1px 100% no-repeat,
+        linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)) 66.66% 0 / 1px 100% no-repeat,
+        linear-gradient(90deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)) 0 33.33% / 100% 1px no-repeat,
+        linear-gradient(90deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)) 0 66.66% / 100% 1px no-repeat;
+      box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.36); cursor: move; touch-action: none; transform: translate(-50%, -50%); }
+    #bannerCrop { aspect-ratio: 16 / 9; }
+    .cover-controls { display: grid; gap: 10px; width: 100%; }
+    .cover-controls label { display: grid; gap: 6px; color: var(--muted); font-size: 0.84rem; font-weight: 800; }
+    .cover-tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .cover-tool { min-height: 40px; padding: 0 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); color: #fff; font-weight: 900; }
+    .cover-tool.primary { background: linear-gradient(135deg, var(--accent), #b48cff); }
+    .cover-position { display: grid; grid-template-columns: repeat(3, 44px); gap: 8px; justify-content: center; margin-top: 2px; }
+    .cover-position .cover-tool { min-width: 44px; padding: 0; font-size: 1.05rem; }
+
+    /* Profile */
+    .profile-header { position: relative; margin: -16px -16px 16px; padding: 0; border-radius: 0; overflow: hidden; background: linear-gradient(180deg, rgba(7, 5, 13, 0.6) 0%, rgba(7, 5, 13, 0.9) 100%); min-height: 240px; }
+    .profile-header.has-banner { background-image: var(--banner-url); background-size: cover; background-position: center; }
+    .profile-banner-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 0%, transparent 60%, rgba(26, 11, 46, 0.2) 75%, rgba(26, 11, 46, 0.8) 90%, #1a0b2e 100%); pointer-events: none; }
+    .profile-info { position: absolute; bottom: 24px; left: 16px; right: 16px; display: flex; align-items: flex-end; gap: 16px; z-index: 1; }
+    .profile-avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; background: #1a1028; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); flex-shrink: 0; }
+    .profile-details { flex: 1; min-width: 0; }
+    .profile-details h2 { margin: 0 0 4px; font-size: 1.5rem; font-weight: 900; letter-spacing: -0.02em; color: #fff; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5); }
+    .btn-edit-profile { position: absolute; bottom: 24px; right: 16px; padding: 12px 28px; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em; border-radius: 999px; background: linear-gradient(135deg, var(--accent), #4b168e); color: #fff; box-shadow: 0 4px 20px rgba(123, 44, 255, 0.35); z-index: 10; }
+
+    .section-title { margin: 0 0 16px; font-size: 1.1rem; font-weight: 900; letter-spacing: -0.01em; }
+    .note { margin: 8px 0 0; color: var(--muted); font-size: 0.86rem; line-height: 1.45; }
+    .empty { padding: 34px 20px; border: 1px dashed rgba(255, 255, 255, 0.2); border-radius: 24px; color: var(--muted); text-align: center; }
+
+    /* Bottom nav */
+    .bottom-nav { position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: min(94%, 520px); padding: 8px; border-radius: 24px; background: rgba(7, 5, 13, 0.42); box-shadow: var(--shadow); transform: translateX(-50%); backdrop-filter: blur(18px); }
+    .nav-btn { padding: 11px 8px; border-radius: 18px; background: transparent; color: var(--muted); font-weight: 800; font-size: 0.82rem; transition: transform 0.15s ease; }
+    .nav-btn:hover { transform: scale(1.05); }
+    .nav-btn.active { background: linear-gradient(135deg, var(--accent), #b48cff); color: #fff; }
+
+    a { color: #d8c4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Bottom sheet */
+    .bottom-sheet-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease; }
+    .bottom-sheet-overlay.open { opacity: 1; visibility: visible; }
+    .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 101; background: var(--panel); border-radius: 28px 28px 0 0; box-shadow: var(--shadow); transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); padding: 0; max-height: 70vh; overflow-y: auto; }
+    .bottom-sheet.open { transform: translateY(0); }
+    .bottom-sheet-handle { width: 40px; height: 4px; background: var(--line); border-radius: 2px; margin: 12px auto 8px; }
+    .bottom-sheet-title { padding: 0 20px 16px; font-size: 1rem; font-weight: 900; color: var(--text); border-bottom: 1px solid var(--line); }
+    .bottom-sheet-options { display: grid; gap: 4px; padding: 16px 20px 24px; }
+    .bottom-sheet-option { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel-2); color: var(--text); font-size: 0.95rem; font-weight: 800; text-align: left; transition: background 0.15s ease, border-color 0.15s ease; }
+    .bottom-sheet-option:hover { background: rgba(180, 140, 255, 0.12); border-color: rgba(180, 140, 255, 0.3); }
+    .bottom-sheet-option.active { background: linear-gradient(135deg, rgba(123, 44, 255, 0.2), rgba(180, 140, 255, 0.1)); border-color: var(--accent); color: var(--accent-2); }
+    .bottom-sheet-option svg { flex: 0 0 24px; color: var(--muted); }
+    .bottom-sheet-option.active svg { color: var(--accent); }
+
+    #listSortBtn,
+    #homeSortBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700; justify-content: center; width: 100%; }
+    #listSortBtn svg,
+    #homeSortBtn svg { flex: 0 0 16px; }
+
+    /* Media queries */
+    @media (min-width: 800px) {
+      .grid { grid-template-columns: repeat(5, minmax(0, 180px)); gap: 16px; }
+    }
+    @media (max-width: 560px) {
+      .app { padding-inline: 12px; }
+      .grid { grid-template-columns: repeat(3, minmax(0, 100px)); gap: 9px; }
+      .card { border-radius: 20px; }
+      .card-body { padding: 36px 8px 8px; }
+      .card h3 { font-size: 0.78rem; }
+      .badge { width: 25px; min-width: 25px; height: 25px; font-size: 0.68rem; }
+      .badge svg { width: 13px; height: 13px; }
+      .detail-view { margin-top: -18px; }
+      .detail-banner,
+      .detail-banner img { min-height: 42svh; height: 42svh; }
+      .detail-banner { border-radius: 0; margin-inline: -12px; overflow: visible; box-shadow: none; }
+      .detail-banner::after { z-index: 1; background: linear-gradient(to top, #2d1a3f 0%, #2d1a3f 18%, rgba(111, 70, 145, 0.72) 34%, rgba(111, 70, 145, 0.18) 48%, transparent 62%); }
+      .detail-banner::before { content: ""; position: absolute; left: 0; right: 0; bottom: -96px; z-index: 1; height: 230px; background: linear-gradient(to bottom, rgba(111, 70, 145, 0), rgba(111, 70, 145, 0.82) 18%, #2d1a3f 44%, #2d1a3f 100%); pointer-events: none; }
+      .detail-content { margin-top: -96px; padding-bottom: 34px; z-index: 2; }
+      .detail-action { flex: 1 1 calc(50% - 8px); width: auto; min-width: 0; }
+      .detail-action.favorite { flex-basis: calc(50% - 8px); }
+      .status-widget,
+      .tags-widget { left: 0; right: 0; top: 66px; }
+      .rating-widget { left: 0; right: 0; top: 66px; grid-template-columns: repeat(5, 1fr); }
+      .rating-star { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="view active" id="homeView">
+      <h2 class="home-title">Games</h2>
+      <div class="toolbar">
+        <button class="btn transparent" id="homeSortBtn" type="button" aria-label="Ordenar jogos">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span id="homeSortBtnText">Ordenar</span>
+        </button>
+        <input class="search" id="searchInput" placeholder="Buscar jogo..." aria-label="Buscar jogos" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath fill=%27%23fff%27 d=%27M9.5 3a6.5 6.5 0 0 1 5.15 10.47l4.44 4.44-1.42 1.42-4.44-4.44A6.5 6.5 0 1 1 9.5 3m0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9%27/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: 12px center; background-size: 16px;">
+      </div>
+      <div class="grid" id="gameGrid"></div>
+    </section>
+
+    <section class="view" id="listView">
+      <div class="list-tabs" id="listTabs">
+        <button class="list-tab active" data-list-tab="todos">Todos</button>
+        <button class="list-tab" data-list-tab="jogado">Jogado</button>
+        <button class="list-tab" data-list-tab="jogando">Jogando</button>
+        <button class="list-tab" data-list-tab="quero-jogar">Quero jogar</button>
+        <button class="list-tab" data-list-tab="desistido">Desistido</button>
+        <button class="list-tab" data-list-tab="favoritos">Favoritos</button>
+      </div>
+      <div class="toolbar list-search">
+        <button class="btn transparent" id="listSortBtn" type="button" aria-label="Ordenar lista">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span id="listSortBtnText">Ordenar</span>
+        </button>
+        <input class="search list-search-input" id="listSearchInput" placeholder="Buscar nesta lista..." aria-label="Buscar na lista atual" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath fill=%27%23fff%27 d=%27M9.5 3a6.5 6.5 0 0 1 5.15 10.47l4.44 4.44-1.42 1.42-4.44-4.44A6.5 6.5 0 1 1 9.5 3m0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9%27/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: 11px center; background-size: 16px;">
+      </div>
+      <div class="status-list" id="statusList"></div>
+    </section>
+
+    <section class="view detail-view" id="detailView">
+      <div class="detail-banner" id="detailBanner">
+        <img id="detailBannerImage" alt="Banner do jogo">
+        <button class="detail-back" id="detailBack" aria-label="Voltar">‹</button>
+        <button class="detail-edit-banner" id="detailEditBanner" aria-label="Editar banner">✎</button>
+        <input id="detailBannerFile" type="file" accept="image/*" hidden>
+      </div>
+      <div class="detail-content">
+        <h2 class="detail-title" id="detailTitle"></h2>
+        <div class="detail-meta">
+          <span class="detail-pill" id="detailRatingPill">Sem nota</span>
+          <span class="detail-pill" id="detailStatusPill">Sem lista</span>
+          <span class="detail-pill" id="detailDeveloperPill">Sem developer</span>
+          <span class="detail-pill" id="detailVersionPill">Sem versão</span>
+          <span class="detail-pill" id="detailGameStatusPill">Status do jogo</span>
+        </div>
+        <h3 class="detail-section-title">Sinopse</h3>
+        <p class="detail-synopsis" id="detailSynopsis"></p>
+        <div class="detail-links" id="detailLinks">
+          <h3 class="detail-links-title">Links</h3>
+          <a class="detail-link" id="detailLink1" target="_blank" rel="noopener noreferrer">Abrir link 1</a>
+          <a class="detail-link" id="detailLink2" target="_blank" rel="noopener noreferrer">Abrir link 2</a>
+          <a class="detail-link" id="detailLink3" target="_blank" rel="noopener noreferrer">Abrir link 3</a>
+        </div>
+        <div class="detail-actions">
+          <button class="detail-action" id="detailEdit" aria-label="Editar jogo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 17.5V20h2.5L17.1 9.4l-2.5-2.5zm14.9-9.9c.4-.4.4-1 0-1.4l-1.1-1.1c-.4-.4-1-.4-1.4 0l-.9.9L18 8.5z"/></svg>
+            <span class="detail-action-label">Editar</span>
+          </button>
+          <button class="detail-action" id="detailRating" aria-label="Dar nota ao jogo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 2.8 2.9 5.9 6.5 .9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+            <span class="detail-action-label" id="detailRatingLabel">Nota</span>
+          </button>
+          <div class="rating-widget" id="ratingWidget"></div>
+          <button class="detail-action" id="detailStatus" aria-label="Mudar status do jogo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6h10v2H4zm0 5h10v2H4zm0 5h7v2H4zm13-6V7h2v3h3v2h-3v3h-2v-3h-3v-2z"/></svg>
+            <span class="detail-action-label" id="detailStatusLabel">Lista</span>
+          </button>
+          <button class="detail-action" id="detailTags" aria-label="Ver tags do jogo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.6 13.4 13.4 20.6q-.6.6-1.4.6t-1.4-.6L3.4 13.4q-.4-.4-.4-1V5q0-.8.6-1.4T5 3h7.4q.6 0 1 .4l7.2 7.2q.6.6.6 1.4t-.6 1.4M7.5 9A1.5 1.5 0 1 0 6 7.5 1.5 1.5 0 0 0 7.5 9"/></svg>
+            <span class="detail-action-label" id="detailTagsLabel">Tags</span>
+          </button>
+          <div class="tags-widget" id="tagsWidget"></div>
+          <button class="detail-action favorite" id="detailFavorite" aria-label="Favoritar jogo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="detail-heart" fill="none" stroke="currentColor" stroke-width="2" d="M12 21s-7.2-4.4-9.5-9.2C.8 8.1 2.8 4 6.8 4c2 0 3.7 1.1 5.2 3 1.5-1.9 3.2-3 5.2-3 4 0 6 4.1 4.3 7.8C19.2 16.6 12 21 12 21z"/></svg>
+            <span class="detail-action-label" id="detailFavoriteLabel">Favorito</span>
+          </button>
+          <button class="detail-action danger" id="detailDelete" aria-label="Excluir jogo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 21q-.8 0-1.4-.6T5 19V7H4V5h5V4h6v1h5v2h-1v12q0 .8-.6 1.4T17 21zm2-4h2V9H9zm4 0h2V9h-2z"/></svg>
+            <span class="detail-action-label">Excluir</span>
+          </button>
+          <div class="status-widget" id="statusWidget">
+            <button data-detail-status="jogado">Jogado</button>
+            <button data-detail-status="jogando">Jogando</button>
+            <button data-detail-status="quero-jogar">Quero jogar</button>
+            <button data-detail-status="desistido">Desistido</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="addView">
+      <div class="panel">
+        <h2 class="section-title" id="formTitle">Adicionar jogo</h2>
+        <form class="form" id="gameForm">
+          <input type="hidden" id="gameId">
+
+          <div class="field">
+            <label for="title">Nome do jogo</label>
+            <input id="title" required placeholder="Ex: Elden Ring">
+          </div>
+
+          <div class="field">
+            <label for="cover">Capa do jogo</label>
+            <input id="cover" type="file" accept="image/*">
+            <p class="note">No celular, este botão abre a galeria para escolher a imagem.</p>
+          </div>
+
+          <div class="cover-thumbnail" id="coverThumbnail">
+            <img id="coverThumbnailImg" alt="Capa atual">
+            <p class="note">Clique para editar a capa</p>
+          </div>
+
+          <div class="cover-editor" id="coverEditor">
+            <div class="cover-frame">
+              <img id="coverPreview" alt="Preview da capa">
+              <div class="cover-crop" id="coverCrop" aria-label="Área de corte da capa"></div>
+            </div>
+            <div class="cover-controls">
+              <div class="cover-tools">
+                <button class="cover-tool primary" type="button" id="chooseCoverAgain">Trocar imagem</button>
+                <button class="cover-tool primary" type="button" id="coverReset">Centralizar</button>
+              </div>
+              <label for="coverZoom">Zoom
+                <input id="coverZoom" type="range" min="1" max="2" step="0.01" value="1">
+              </label>
+              <label for="cropSize">Tamanho da grade
+                <input id="cropSize" type="range" min="45" max="96" step="1" value="70">
+              </label>
+              <div class="cover-position" aria-label="Ajustar posição da capa">
+                <span></span>
+                <button class="cover-tool" type="button" data-cover-nudge="up" aria-label="Subir imagem">↑</button>
+                <span></span>
+                <button class="cover-tool" type="button" data-cover-nudge="left" aria-label="Mover imagem para esquerda">←</button>
+                <button class="cover-tool" type="button" data-cover-nudge="down" aria-label="Descer imagem">↓</button>
+                <button class="cover-tool" type="button" data-cover-nudge="right" aria-label="Mover imagem para direita">→</button>
+              </div>
+              <label for="coverX">Posição horizontal
+                <input id="coverX" type="range" min="-50" max="50" step="1" value="0">
+              </label>
+              <label for="coverY">Posição vertical
+                <input id="coverY" type="range" min="-50" max="50" step="1" value="0">
+              </label>
+              <p class="note">A imagem abre inteira. Arraste a imagem ou a grade, ajuste o zoom e diminua/aumente a grade antes de salvar.</p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="synopsis">Breve sinopse</label>
+            <textarea id="synopsis" placeholder="Escreva um resumo curto sobre o jogo"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="version">Versão do game</label>
+            <input id="version" placeholder="Ex: PS5, PC, Switch, 1.0, Deluxe">
+          </div>
+
+          <div class="field">
+            <label for="developer">Developer</label>
+            <input id="developer" placeholder="Ex: FromSoftware, Rockstar, Nintendo">
+          </div>
+
+          <div class="field">
+            <label for="tags">Tags</label>
+            <input id="tags" placeholder="Ex: RPG, mundo aberto, favorito">
+            <p class="note">Separe as tags por vírgula.</p>
+          </div>
+
+          <div class="field">
+            <label for="rating">Nota de 1 a 10</label>
+            <input id="rating" type="number" min="1" max="10" step="0.5" placeholder="Ex: 9.5">
+          </div>
+
+          <div class="field">
+            <label for="link1">Link 1</label>
+            <input id="link1" placeholder="https://...">
+          </div>
+
+          <div class="field">
+            <label for="link2">Link 2</label>
+            <input id="link2" placeholder="https://...">
+          </div>
+
+          <div class="field">
+            <label for="link3">Link 3</label>
+            <input id="link3" placeholder="https://...">
+          </div>
+
+          <div class="field">
+            <label for="status">Lista</label>
+            <select id="status">
+              <option value="jogando">Jogando</option>
+              <option value="quero-jogar">Quero jogar</option>
+              <option value="jogado">Jogado</option>
+              <option value="desistido">Desistido</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="gameStatus">Status do jogo</label>
+            <select id="gameStatus">
+              <option value="em-andamento">Em desenvolvimento</option>
+              <option value="completo">Completo</option>
+              <option value="abandonado">Abandonado</option>
+            </select>
+          </div>
+
+          <label class="favorite-toggle" for="favorite" title="Favorito" aria-label="Favorito">
+            <input id="favorite" type="checkbox">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path class="heart" d="M12 21s-7.2-4.4-9.5-9.2C.8 8.1 2.8 4 6.8 4c2 0 3.7 1.1 5.2 3 1.5-1.9 3.2-3 5.2-3 4 0 6 4.1 4.3 7.8C19.2 16.6 12 21 12 21z"/>
+            </svg>
+          </label>
+
+          <button class="btn full" type="submit">Salvar jogo</button>
+          <button class="btn secondary full" type="button" id="clearForm">Limpar formulário</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="view" id="profileView">
+      <div class="profile-header" id="profileHeader">
+        <div class="profile-banner-overlay"></div>
+        <div class="profile-info">
+          <img id="profileAvatarPreview" alt="Foto de perfil" class="profile-avatar">
+          <div class="profile-details">
+            <h1 id="profileNamePreview">M+</h1>
+          </div>
+        </div>
+        <button class="btn-edit-profile" id="editProfileBtn" type="button" aria-label="Editar perfil">EDITAR</button>
+      </div>
+
+      <div class="panel" id="profileEditPanel" style="display: none;">
+        <h2 class="section-title">Editar Perfil</h2>
+
+        <form class="form" id="profileForm">
+          <div class="field">
+            <label for="profileName">Nome do perfil</label>
+            <input id="profileName" placeholder="Ex: Meu Perfil Gamer">
+          </div>
+
+          <div class="field">
+            <label for="avatarFile">Foto de perfil</label>
+            <input id="avatarFile" type="file" accept="image/*">
+          </div>
+
+          <div class="field">
+            <label for="bannerFile">Banner</label>
+            <input id="bannerFile" type="file" accept="image/*">
+          </div>
+
+          <div class="cover-editor" id="bannerEditor">
+            <div class="cover-frame" id="bannerFrame">
+              <img id="bannerPreview" alt="Preview do banner">
+              <div class="cover-crop" id="bannerCrop" aria-label="Área de corte do banner"></div>
+            </div>
+            <div class="cover-controls">
+              <div class="cover-tools">
+                <button class="cover-tool primary" type="button" id="chooseBannerAgain">Trocar imagem</button>
+                <button class="cover-tool" type="button" id="bannerReset">Centralizar</button>
+              </div>
+              <label for="bannerZoom">Zoom
+                <input id="bannerZoom" type="range" min="1" max="2" step="0.01" value="1">
+              </label>
+              <label for="bannerCropSize">Tamanho da grade
+                <input id="bannerCropSize" type="range" min="45" max="96" step="1" value="70">
+              </label>
+              <div class="cover-position" aria-label="Ajustar posição do banner">
+                <span></span>
+                <button class="cover-tool" type="button" data-banner-nudge="up" aria-label="Subir imagem">↑</button>
+                <span></span>
+                <button class="cover-tool" type="button" data-banner-nudge="left" aria-label="Mover imagem para esquerda">←</button>
+                <button class="cover-tool" type="button" data-banner-nudge="down" aria-label="Descer imagem">↓</button>
+                <button class="cover-tool" type="button" data-banner-nudge="right" aria-label="Mover imagem para direita">→</button>
+              </div>
+              <label for="bannerX">Posição horizontal
+                <input id="bannerX" type="range" min="-50" max="50" step="1" value="0">
+              </label>
+              <label for="bannerY">Posição vertical
+                <input id="bannerY" type="range" min="-50" max="50" step="1" value="0">
+              </label>
+              <p class="note">A imagem abre inteira. Arraste a imagem ou a grade, ajuste o zoom e diminua/aumente a grade antes de salvar.</p>
+            </div>
+          </div>
+
+          <button class="btn full" type="submit">Salvar perfil</button>
+          <button class="btn secondary full" type="button" id="cancelProfileEdit">Cancelar</button>
+        </form>
+      </div>
+
+      <div class="panel" id="backupPanel">
+        <h2 class="section-title">Backup</h2>
+        <p class="note">Você pode exportar um arquivo JSON com seus jogos e importar depois.</p>
+
+        <div class="form" id="backupForm">
+          <button class="btn full" id="exportBackup">Exportar backup</button>
+          <button class="btn secondary full" id="importBackupBtn">Importar backup</button>
+          <input id="importBackupFile" type="file" accept="application/json" hidden>
+          <p class="note" id="backupStatus"></p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="home">Home</button>
+    <button class="nav-btn" data-tab="list">Lista</button>
+    <button class="nav-btn" data-tab="add">Adicionar</button>
+    <button class="nav-btn" data-tab="profile">Perfil</button>
+  </nav>
+
+  <div class="bottom-sheet-overlay" id="sortOverlay" aria-hidden="true"></div>
+
+  <div class="bottom-sheet" id="sortSheet" role="dialog" aria-modal="true" aria-label="Ordenar jogos">
+    <div class="bottom-sheet-handle" aria-hidden="true"></div>
+    <h3 class="bottom-sheet-title">Ordenar por</h3>
+    <div class="bottom-sheet-options">
+      <button class="bottom-sheet-option" data-sort="title-az">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 15l8-8 8 8"/><path d="M12 7v10"/></svg>
+        <span>Nome (A-Z)</span>
+      </button>
+      <button class="bottom-sheet-option" data-sort="title-za">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9l8 8 8-8"/><path d="M12 17V7"/></svg>
+        <span>Nome (Z-A)</span>
+      </button>
+      <button class="bottom-sheet-option" data-sort="rating-desc">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>Nota (Maior)</span>
+      </button>
+      <button class="bottom-sheet-option" data-sort="rating-asc">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22l-3.09-6.26L2 14.73l5-4.87-1.18-6.88L12 6.23l6.18 3.25L22 14.73l-6.91 1.01L12 22z"/></svg>
+        <span>Nota (Menor)</span>
+      </button>
+      <button class="bottom-sheet-option" data-sort="created-desc">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Recentes</span>
+      </button>
+      <button class="bottom-sheet-option" data-sort="created-asc">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>Antigos</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const DB_NAME = 'game-shelf-db';
+    const DB_VERSION = 1;
+
+    const STATUSES = [
+      ['jogando', 'Jogando'],
+      ['quero-jogar', 'Quero jogar'],
+      ['jogado', 'Jogado'],
+      ['desistido', 'Desistido']
+    ];
+
+    const GAME_STATUSES = {
+      'em-andamento': 'Em desenvolvimento',
+      completo: 'Completo',
+      abandonado: 'Abandonado'
+    };
+
+    const SORT_LABELS = {
+      'title-az': 'Nome (A-Z)',
+      'title-za': 'Nome (Z-A)',
+      'rating-desc': 'Nota (Maior)',
+      'rating-asc': 'Nota (Menor)',
+      'created-desc': 'Recentes',
+      'created-asc': 'Antigos'
+    };
+
+    const SORTS = {
+      'title-az': (a, b) => a.title.localeCompare(b.title),
+      'title-za': (a, b) => b.title.localeCompare(a.title),
+      'rating-desc': (a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0),
+      'rating-asc': (a, b) => (Number(a.rating) || 0) - (Number(b.rating) || 0),
+      'created-desc': (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      'created-asc': (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+    };
+
+    const ICONS = {
+      check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.2 16.6 4.9 12.3l-1.7 1.7 6 6L21 8.2l-1.7-1.7z"/></svg>',
+      bookmark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>',
+      play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>',
+      hidden: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2.3 3.7 3.7 2.3l18 18-1.4 1.4-3.1-3.1A12.3 12.3 0 0 1 12 20C5.4 20 2 12 2 12a20 20 0 0 1 4.1-5.5zm6.3 6.3a3.5 3.5 0 0 0 4.8 4.8zm3.4-6c6.6 0 10 8 10 8a18.8 18.8 0 0 1-2.8 4.2l-3-3A4.5 4.5 0 0 0 10.8 7.8L8.6 5.6A12.2 12.2 0 0 1 12 4z"/></svg>',
+      heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.2-4.4-9.5-9.2C.8 8.1 2.8 4 6.8 4c2 0 3.7 1.1 5.2 3 1.5-1.9 3.2-3 5.2-3 4 0 6 4.1 4.3 7.8C19.2 16.6 12 21 12 21z"/></svg>'
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => document.querySelectorAll(selector);
+
+    let db;
+    let games = [];
+    let profile = { id: 'me', name: 'M+', avatar: '', banner: '' };
+    let activeListTab = 'jogado';
+    let activeListSort = 'title-az';
+    let activeDetailGameId = null;
+    let navHistory = ['home'];
+    let backPressTime = 0;
+    let exitToast = null;
+
+    // Cache de elementos DOM
+    const els = {
+      gameGrid: $('#gameGrid'),
+      statusList: $('#statusList'),
+      sortOverlay: $('#sortOverlay'),
+      sortSheet: $('#sortSheet'),
+      detailBack: $('#detailBack'),
+      detailEdit: $('#detailEdit'),
+      detailDelete: $('#detailDelete'),
+      detailEditBanner: $('#detailEditBanner'),
+      detailBannerFile: $('#detailBannerFile'),
+      detailBannerImage: $('#detailBannerImage'),
+      detailTitle: $('#detailTitle'),
+      detailSynopsis: $('#detailSynopsis'),
+      detailLinks: $('#detailLinks'),
+      detailRating: $('#detailRating'),
+      detailRatingLabel: $('#detailRatingLabel'),
+      detailRatingPill: $('#detailRatingPill'),
+      detailStatusLabel: $('#detailStatusLabel'),
+      detailStatusPill: $('#detailStatusPill'),
+      detailDeveloperPill: $('#detailDeveloperPill'),
+      detailVersionPill: $('#detailVersionPill'),
+      detailGameStatusPill: $('#detailGameStatusPill'),
+      detailTagsLabel: $('#detailTagsLabel'),
+      detailFavorite: $('#detailFavorite'),
+      detailFavoriteLabel: $('#detailFavoriteLabel'),
+      detailHeart: document.querySelector('.detail-heart'),
+      ratingWidget: $('#ratingWidget'),
+      statusWidget: $('#statusWidget'),
+      tagsWidget: $('#tagsWidget'),
+      detailTags: $('#detailTags'),
+      detailStatus: $('#detailStatus'),
+      searchInput: $('#searchInput'),
+      listSearchInput: $('#listSearchInput'),
+      cover: $('#cover'),
+      coverEditor: $('#coverEditor'),
+      coverPreview: $('#coverPreview'),
+      coverCrop: $('#coverCrop'),
+      coverZoom: $('#coverZoom'),
+      coverX: $('#coverX'),
+      coverY: $('#coverY'),
+      cropSize: $('#cropSize'),
+      coverReset: $('#coverReset'),
+      chooseCoverAgain: $('#chooseCoverAgain'),
+      coverThumbnail: $('#coverThumbnail'),
+      coverThumbnailImg: $('#coverThumbnailImg'),
+      bannerFile: $('#bannerFile'),
+      bannerEditor: $('#bannerEditor'),
+      bannerPreview: $('#bannerPreview'),
+      bannerCrop: $('#bannerCrop'),
+      bannerZoom: $('#bannerZoom'),
+      bannerX: $('#bannerX'),
+      bannerY: $('#bannerY'),
+      bannerCropSize: $('#bannerCropSize'),
+      bannerReset: $('#bannerReset'),
+      chooseBannerAgain: $('#chooseBannerAgain'),
+      gameForm: $('#gameForm'),
+      gameId: $('#gameId'),
+      formTitle: $('#formTitle'),
+      clearForm: $('#clearForm'),
+      status: $('#status'),
+      rating: $('#rating'),
+      favorite: $('#favorite'),
+      gameStatus: $('#gameStatus'),
+      profileForm: $('#profileForm'),
+      profileName: $('#profileName'),
+      avatarFile: $('#avatarFile'),
+      exportBackup: $('#exportBackup'),
+      importBackupBtn: $('#importBackupBtn'),
+      importBackupFile: $('#importBackupFile'),
+      backupStatus: $('#backupStatus'),
+      editProfileBtn: $('#editProfileBtn'),
+      cancelProfileEdit: $('#cancelProfileEdit'),
+      profileAvatarPreview: $('#profileAvatarPreview'),
+      profileNamePreview: $('#profileNamePreview'),
+      profileHeader: $('#profileHeader'),
+      profileEditPanel: $('#profileEditPanel')
+    };
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          if (!database.objectStoreNames.contains('games')) {
+            database.createObjectStore('games', { keyPath: 'id', autoIncrement: true });
+          }
+          if (!database.objectStoreNames.contains('profile')) {
+            database.createObjectStore('profile', { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function store(name, mode = 'readonly') {
+      return db.transaction(name, mode).objectStore(name);
+    }
+
+    function requestToPromise(request) {
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function sanitizeProfile(value) {
+      if (value && typeof value === 'object') {
+        delete value.googleClientId;
+        delete value['google' + 'ClientId'];
+      }
+      return value;
+    }
+
+    async function loadData() {
+      const loadedGames = await requestToPromise(store('games').getAll());
+      let needsMigration = false;
+
+      games = loadedGames.map((game) => {
+        let status = game.status;
+        if (status === 'terminado') status = 'jogado';
+        if (status === 'abandonado') status = 'desistido';
+        const updated = {
+          ...game,
+          status,
+          gameStatus: game.gameStatus || 'em-andamento'
+        };
+        if (game.link && !updated.link1) updated.link1 = game.link;
+        if (updated.status !== game.status || !game.gameStatus || (game.link && !game.link1)) needsMigration = true;
+        return updated;
+      });
+
+      if (needsMigration) {
+        for (const game of games) {
+          await requestToPromise(store('games', 'readwrite').put(game));
+        }
+      }
+
+      const loadedProfile = await requestToPromise(store('profile').get('me'));
+      profile = sanitizeProfile({ ...profile, ...(loadedProfile || {}) });
+      els.profileName.value = profile.name || '';
+    }
+
+    async function saveProfile() {
+      await requestToPromise(store('profile', 'readwrite').put(profile));
+    }
+
+    async function saveGame(game) {
+      await requestToPromise(store('games', 'readwrite').put(game));
+      await loadData();
+      render();
+    }
+
+    async function deleteGame(id) {
+      await requestToPromise(store('games', 'readwrite').delete(Number(id)));
+      await loadData();
+      render();
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) { resolve(''); return; }
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function debounce(fn, delay = 150) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('Imagem inválida'));
+        image.src = src;
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      })[char]);
+    }
+
+    function placeholderImage() {
+      return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7b2cff"/><stop offset="1" stop-color="#b48cff"/></linearGradient></defs>
+          <rect width="300" height="400" fill="#07050d"/>
+          <rect x="34" y="42" width="232" height="316" rx="28" fill="url(#g)" opacity=".85"/>
+          <text x="150" y="214" text-anchor="middle" font-size="34" font-family="Arial" font-weight="700" fill="white">GAME</text>
+        </svg>
+      `);
+    }
+
+    function statusLabel(status) {
+      return (STATUSES.find(([value]) => value === status) || [status, status])[1];
+    }
+
+    function normalizeUrl(url) {
+      if (!url) return null;
+      try {
+        const withProtocol = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+        return new URL(withProtocol);
+      } catch { return null; }
+    }
+
+    function safeUrl(url) {
+      return normalizeUrl(url)?.href || '';
+    }
+
+    function getDomainName(url) {
+      return normalizeUrl(url)?.hostname.replace('www.', '') || '';
+    }
+
+    function gameTags(game) {
+      return String(game?.tags || '').split(',').map((tag) => tag.trim()).filter(Boolean);
+    }
+
+    function renderTags(tags) {
+      return tags.length
+        ? tags.map((tag) => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join('')
+        : '<span class="tag-chip">Sem tags</span>';
+    }
+
+    function createImageEditor({
+      frame,
+      crop,
+      cropSelector,
+      preview,
+      editor,
+      thumbnail,
+      thumbnailImg,
+      zoom,
+      x,
+      y,
+      cropSize,
+      outputWidth,
+      outputHeight,
+      frameFallbackWidth,
+      frameFallbackHeight,
+      frameDrag = false
+    }) {
+      let source = '';
+      let imageDrag = null;
+      let cropDrag = null;
+      let dirty = false;
+
+      const frameEl = frame || preview.closest('.cover-frame');
+      const value = (el) => Number(el.value) || 0;
+
+      function updateCrop() {
+        const size = value(cropSize) || 70;
+        const cx = Number(crop.dataset.x) || 0;
+        const cy = Number(crop.dataset.y) || 0;
+        crop.style.width = `${size}%`;
+        crop.style.transform = `translate(calc(-50% + ${cx}px), calc(-50% + ${cy}px))`;
+      }
+
+      function updatePreview() {
+        preview.style.transform = `translate(${x.value}%, ${y.value}%) scale(${zoom.value})`;
+        updateCrop();
+      }
+
+      function setPosition(px, py) {
+        dirty = true;
+        x.value = Math.max(-50, Math.min(50, Math.round(px)));
+        y.value = Math.max(-50, Math.min(50, Math.round(py)));
+        updatePreview();
+      }
+
+      function nudge(direction) {
+        const step = 5;
+        const moves = {
+          left: [value(x) - step, value(y)],
+          right: [value(x) + step, value(y)],
+          up: [value(x), value(y) - step],
+          down: [value(x), value(y) + step]
+        };
+        const next = moves[direction];
+        if (next) setPosition(next[0], next[1]);
+      }
+
+      function resetControls() {
+        zoom.value = '1';
+        x.value = '0';
+        y.value = '0';
+        cropSize.value = '70';
+        crop.dataset.x = '0';
+        crop.dataset.y = '0';
+      }
+
+      function reset() {
+        source = '';
+        dirty = false;
+        editor.style.display = 'none';
+        preview.src = '';
+        if (thumbnail) {
+          thumbnail.style.display = 'none';
+          thumbnailImg.src = '';
+        }
+        resetControls();
+        updatePreview();
+      }
+
+      function showEditor(image, { markDirty = false } = {}) {
+        source = image || '';
+        dirty = markDirty && Boolean(source);
+        preview.src = source;
+        editor.style.display = source ? 'grid' : 'none';
+        if (thumbnail) thumbnail.style.display = 'none';
+        resetControls();
+        updatePreview();
+      }
+
+      function showThumbnail(image) {
+        source = image || '';
+        dirty = false;
+        thumbnailImg.src = source;
+        thumbnail.style.display = source ? 'block' : 'none';
+        editor.style.display = 'none';
+      }
+
+      function openEditor() {
+        if (source) showEditor(source);
+      }
+
+      async function toDataUrl() {
+        if (!source) return '';
+
+        const image = await loadImage(source);
+        const canvas = document.createElement('canvas');
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
+        const context = canvas.getContext('2d');
+        const currentZoom = value(zoom);
+        const posX = value(x) / 100;
+        const posY = value(y) / 100;
+        const frameRect = frameEl.getBoundingClientRect();
+        const cropRect = crop.getBoundingClientRect();
+        const frameWidth = frameRect.width || frameFallbackWidth || 300;
+        const frameHeight = frameRect.height || frameFallbackHeight || 300;
+        const cropLeft = cropRect.left - frameRect.left;
+        const cropTop = cropRect.top - frameRect.top;
+        const cropWidth = cropRect.width;
+        const cropHeight = cropRect.height;
+        const previewScale = Math.min(frameWidth / image.naturalWidth, frameHeight / image.naturalHeight);
+        const previewWidth = image.naturalWidth * previewScale * currentZoom;
+        const previewHeight = image.naturalHeight * previewScale * currentZoom;
+        const previewLeft = (frameWidth - previewWidth) / 2 + posX * frameWidth;
+        const previewTop = (frameHeight - previewHeight) / 2 + posY * frameHeight;
+        const left = Math.max(cropLeft, previewLeft);
+        const top = Math.max(cropTop, previewTop);
+        const right = Math.min(cropLeft + cropWidth, previewLeft + previewWidth);
+        const bottom = Math.min(cropTop + cropHeight, previewTop + previewHeight);
+
+        context.fillStyle = '#05030a';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (right <= left || bottom <= top) {
+          return canvas.toDataURL('image/jpeg', 0.9);
+        }
+
+        const sourceX = ((left - previewLeft) / previewWidth) * image.naturalWidth;
+        const sourceY = ((top - previewTop) / previewHeight) * image.naturalHeight;
+        const sourceWidth = ((right - left) / previewWidth) * image.naturalWidth;
+        const sourceHeight = ((bottom - top) / previewHeight) * image.naturalHeight;
+        const targetX = ((left - cropLeft) / cropWidth) * canvas.width;
+        const targetY = ((top - cropTop) / cropHeight) * canvas.height;
+        const targetWidth = ((right - left) / cropWidth) * canvas.width;
+        const targetHeight = ((bottom - top) / cropHeight) * canvas.height;
+
+        context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, targetWidth, targetHeight);
+        return canvas.toDataURL('image/jpeg', 0.9);
+      }
+
+      function bindPointerEvents() {
+        crop.addEventListener('pointerdown', (event) => {
+          cropDrag = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            startCropX: Number(crop.dataset.x) || 0,
+            startCropY: Number(crop.dataset.y) || 0
+          };
+          crop.setPointerCapture(event.pointerId);
+          event.stopPropagation();
+        });
+
+        crop.addEventListener('pointermove', (event) => {
+          if (!cropDrag || cropDrag.pointerId !== event.pointerId) return;
+          dirty = true;
+          crop.dataset.x = String(cropDrag.startCropX + event.clientX - cropDrag.startX);
+          crop.dataset.y = String(cropDrag.startCropY + event.clientY - cropDrag.startY);
+          updateCrop();
+        });
+
+        const endCropDrag = (event) => {
+          if (cropDrag?.pointerId === event.pointerId) cropDrag = null;
+        };
+        crop.addEventListener('pointerup', endCropDrag);
+        crop.addEventListener('pointercancel', endCropDrag);
+
+        if (frameDrag) {
+          frameEl.addEventListener('pointerdown', (event) => {
+            if (event.target.closest(cropSelector) || !source) return;
+            imageDrag = {
+              pointerId: event.pointerId,
+              startX: event.clientX,
+              startY: event.clientY,
+              startXValue: value(x),
+              startYValue: value(y)
+            };
+            frameEl.setPointerCapture(event.pointerId);
+          });
+
+          frameEl.addEventListener('pointermove', (event) => {
+            if (!imageDrag || imageDrag.pointerId !== event.pointerId) return;
+            const rect = frameEl.getBoundingClientRect();
+            const nextX = imageDrag.startXValue + ((event.clientX - imageDrag.startX) / rect.width) * 100;
+            const nextY = imageDrag.startYValue + ((event.clientY - imageDrag.startY) / rect.height) * 100;
+            dirty = true;
+            setPosition(nextX, nextY);
+          });
+
+          const endFrameDrag = (event) => {
+            if (imageDrag?.pointerId === event.pointerId) imageDrag = null;
+          };
+          frameEl.addEventListener('pointerup', endFrameDrag);
+          frameEl.addEventListener('pointercancel', endFrameDrag);
+        }
+
+        [zoom, x, y].forEach((el) => el.addEventListener('input', () => {
+          dirty = true;
+          updatePreview();
+        }));
+        cropSize.addEventListener('input', () => {
+          dirty = true;
+          updateCrop();
+        });
+      }
+
+      bindPointerEvents();
+
+      return {
+        isDirty: () => dirty,
+        showEditor,
+        showThumbnail,
+        openEditor,
+        reset,
+        resetControls,
+        updatePreview,
+        nudge,
+        toDataUrl
+      };
+    }
+
+    const coverEditor = createImageEditor({
+      frame: document.querySelector('.cover-frame'),
+      crop: $('#coverCrop'),
+      cropSelector: '#coverCrop',
+      preview: $('#coverPreview'),
+      editor: $('#coverEditor'),
+      thumbnail: $('#coverThumbnail'),
+      thumbnailImg: $('#coverThumbnailImg'),
+      zoom: $('#coverZoom'),
+      x: $('#coverX'),
+      y: $('#coverY'),
+      cropSize: $('#cropSize'),
+      outputWidth: 600,
+      outputHeight: 800,
+      frameFallbackWidth: 300,
+      frameFallbackHeight: 300,
+      frameDrag: true
+    });
+
+    const bannerEditor = createImageEditor({
+      frame: $('#bannerFrame'),
+      crop: $('#bannerCrop'),
+      cropSelector: '#bannerCrop',
+      preview: $('#bannerPreview'),
+      editor: $('#bannerEditor'),
+      zoom: $('#bannerZoom'),
+      x: $('#bannerX'),
+      y: $('#bannerY'),
+      cropSize: $('#bannerCropSize'),
+      outputWidth: 1200,
+      outputHeight: 400,
+      frameFallbackWidth: 600,
+      frameFallbackHeight: 200,
+      frameDrag: false
+    });
+
+    function gameMatchesTerm(game, term) {
+      return `${game.title} ${game.developer || ''} ${game.tags || ''}`.toLowerCase().includes(term);
+    }
+
+    function sortGames(items, sortBy) {
+      return [...items].sort(SORTS[sortBy] || (() => 0));
+    }
+
+    function statusIconName(status) {
+      return { jogado: 'check', 'quero-jogar': 'bookmark', jogando: 'play', desistido: 'hidden' }[status] || 'bookmark';
+    }
+
+    function icon(name) {
+      return ICONS[name] || '';
+    }
+
+    function cardBadges(game) {
+      const rating = Number(game.rating);
+      return `
+        <div class="card-badges">
+          ${rating ? `<span class="badge rating">${escapeHtml(Math.min(10, Math.max(1, rating)))}</span>` : ''}
+          <span class="badge ${escapeHtml(game.status)}" title="${escapeHtml(statusLabel(game.status))}">${icon(statusIconName(game.status))}</span>
+          ${game.favorite ? `<span class="badge favorite" title="Favorito">${icon('heart')}</span>` : ''}
+        </div>
+      `;
+    }
+
+    function gameCard(game) {
+      return `
+        <article class="card" data-open-detail="${game.id}">
+          <img class="cover" src="${game.cover || placeholderImage()}" alt="${escapeHtml(game.title)}" loading="lazy" decoding="async">
+          ${cardBadges(game)}
+          <div class="card-body">
+            <h3>${escapeHtml(game.title)}</h3>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderMiniList(items) {
+      return items.length
+        ? `<div class="grid">${items.map(gameCard).join('')}</div>`
+        : '<p class="note">Nenhum jogo nesta lista.</p>';
+    }
+
+    function updateSortUI(buttonTextId) {
+      $(buttonTextId).textContent = SORT_LABELS[activeListSort] || 'Ordenar';
+      $$('.bottom-sheet-option[data-sort]').forEach((option) => {
+        option.classList.toggle('active', option.dataset.sort === activeListSort);
+      });
+    }
+
+    function render() {
+      renderProfile();
+      renderHome();
+      renderList();
+    }
+
+    function renderProfile() {
+      const header = els.profileHeader;
+      els.profileAvatarPreview.src = profile.avatar || placeholderImage();
+      els.profileNamePreview.textContent = profile.name || 'M+';
+
+      if (profile.banner) {
+        header.style.setProperty('--banner-url', `url("${profile.banner}")`);
+        header.classList.add('has-banner');
+      } else {
+        header.style.removeProperty('--banner-url');
+        header.classList.remove('has-banner');
+      }
+
+      header.style.display = 'block';
+      els.profileEditPanel.style.display = 'none';
+    }
+
+    function renderHome() {
+      const term = els.searchInput.value.trim().toLowerCase();
+      const filtered = sortGames(games.filter((game) => gameMatchesTerm(game, term)), activeListSort);
+      updateSortUI('#homeSortBtnText');
+
+      els.gameGrid.innerHTML = filtered.length
+        ? filtered.map(gameCard).join('')
+        : '<div class="empty">Nenhum jogo encontrado. Vá em Adicionar para cadastrar o primeiro.</div>';
+    }
+
+    function renderList() {
+      $$('.list-tab').forEach((button) => {
+        button.classList.toggle('active', button.dataset.listTab === activeListTab);
+      });
+
+      const tabCounts = { todos: games.length, favoritos: games.filter((g) => g.favorite).length };
+      STATUSES.forEach(([value]) => {
+        tabCounts[value] = games.filter((g) => g.status === value).length;
+      });
+
+      const isFavorites = activeListTab === 'favoritos';
+      const isTodos = activeListTab === 'todos';
+      const title = `${isFavorites ? 'Favoritos' : isTodos ? 'Todos' : statusLabel(activeListTab)} (${tabCounts[activeListTab] || 0})`;
+      const term = els.listSearchInput.value.trim().toLowerCase();
+
+      let items;
+      if (isFavorites) items = games.filter((game) => game.favorite);
+      else if (isTodos) items = games;
+      else items = games.filter((game) => game.status === activeListTab);
+      items = sortGames(items.filter((game) => gameMatchesTerm(game, term)), activeListSort);
+
+      updateSortUI('#listSortBtnText');
+      els.statusList.innerHTML = `<section class="status-box"><h2>${title}</h2>${renderMiniList(items)}</section>`;
+    }
+
+    function renderRatingStars(value) {
+      const rating = Number(value) || 0;
+      els.ratingWidget.innerHTML = Array.from({ length: 10 }, (_, index) => {
+        const starValue = index + 1;
+        const fill = rating >= starValue ? 100 : rating >= starValue - 0.5 ? 50 : 0;
+        return `
+          <button class="rating-star" data-detail-rating="${starValue}" aria-label="Nota ${starValue}">
+            <span class="rating-star-fill" style="width: ${fill}%">★</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function activeDetailGame() {
+      return games.find((game) => game.id === activeDetailGameId);
+    }
+
+    function renderDetail() {
+      const game = activeDetailGame();
+      if (!game) return;
+      const rating = Number(game.rating);
+      const ratingLabel = rating ? `${Math.min(10, Math.max(1, rating))}/10` : 'Dar nota';
+      const statusValue = game.status || 'quero-jogar';
+      const isQueroJogar = statusValue === 'quero-jogar';
+      const currentStatus = statusLabel(statusValue);
+      const tags = gameTags(game);
+      const links = [game.link1, game.link2, game.link3].map(safeUrl);
+
+      els.detailBannerImage.src = game.banner || game.cover || placeholderImage();
+      els.detailBannerImage.setAttribute('loading', 'lazy');
+      els.detailBannerImage.setAttribute('decoding', 'async');
+      els.detailTitle.textContent = game.title;
+      els.detailSynopsis.textContent = game.synopsis || 'Sem sinopse.';
+
+      els.detailLinks.classList.toggle('active', links.some(Boolean));
+      links.forEach((link, index) => {
+        const anchor = $(`#detailLink${index + 1}`);
+        anchor.href = link || '#';
+        anchor.textContent = link ? getDomainName(link) : '';
+        anchor.style.display = link ? 'inline-flex' : 'none';
+      });
+
+      els.detailRating.title = game.rating ? `Nota ${game.rating}` : 'Dar nota';
+      els.detailRating.setAttribute('aria-label', rating ? `Nota ${ratingLabel}` : 'Dar nota');
+      els.detailRatingLabel.textContent = ratingLabel;
+      els.detailRatingPill.textContent = rating ? `Nota ${ratingLabel}` : 'Sem nota';
+      els.detailStatusLabel.textContent = currentStatus;
+      els.detailStatusPill.textContent = currentStatus;
+      els.detailDeveloperPill.textContent = game.developer ? `Dev: ${game.developer}` : 'Sem developer';
+      els.detailVersionPill.textContent = game.version ? `Versão: ${game.version}` : 'Sem versão';
+      els.detailGameStatusPill.textContent = game.gameStatus ? (GAME_STATUSES[game.gameStatus] || game.gameStatus) : 'Sem status';
+      els.detailTagsLabel.textContent = tags.length ? `${tags.length} Tags` : 'Tags';
+      els.tagsWidget.innerHTML = renderTags(tags);
+
+      const favorite = Boolean(game.favorite);
+      els.detailFavorite.classList.toggle('active', favorite);
+      els.detailFavorite.setAttribute('aria-label', favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos');
+      els.detailFavoriteLabel.textContent = favorite ? 'Favorito' : 'Favoritar';
+      if (els.detailHeart) els.detailHeart.setAttribute('fill', favorite ? 'currentColor' : 'none');
+
+      renderRatingStars(game.rating);
+      els.detailRating.classList.toggle('disabled', isQueroJogar);
+      els.detailRating.setAttribute('aria-disabled', isQueroJogar);
+      els.ratingWidget.classList.toggle('disabled', isQueroJogar);
+
+      $$('[data-detail-status]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.detailStatus === statusValue);
+      });
+
+      ['statusWidget', 'ratingWidget', 'tagsWidget'].forEach((id) => $(`#${id}`).classList.remove('open'));
+    }
+
+    async function updateDetailGame(changes) {
+      const game = activeDetailGame();
+      if (!game) return;
+      activeDetailGameId = game.id;
+      await saveGame({ ...game, ...changes, updatedAt: new Date().toISOString() });
+      renderDetail();
+    }
+
+    function showView(tab) {
+      $$('.view').forEach((view) => view.classList.remove('active'));
+      $$('.nav-btn').forEach((button) => button.classList.toggle('active', button.dataset.tab === tab));
+      $(`#${tab}View`).classList.add('active');
+      scrollTo({ top: 0, behavior: 'smooth' });
+      if (tab === 'profile' && profile.banner) {
+        bannerEditor.showEditor(profile.banner);
+      }
+    }
+
+    function showTab(tab, push = true) {
+      showView(tab);
+      if (push && navHistory[navHistory.length - 1] !== tab) navHistory.push(tab);
+    }
+
+    function showDetail(id, push = true) {
+      activeDetailGameId = Number(id);
+      renderDetail();
+      showView('detail');
+      if (push && navHistory[navHistory.length - 1] !== 'detail') navHistory.push('detail');
+    }
+
+    function goBack() {
+      if (navHistory.length > 1) {
+        navHistory.pop();
+        const target = navHistory[navHistory.length - 1];
+        if (target === 'detail' && activeDetailGameId) showDetail(activeDetailGameId, false);
+        else showTab(target, false);
+      }
+    }
+
+    function resetForm() {
+      els.gameForm.reset();
+      els.gameId.value = '';
+      els.gameStatus.value = 'em-andamento';
+      els.rating.disabled = false;
+      coverEditor.reset();
+      els.formTitle.textContent = 'Adicionar jogo';
+    }
+
+    function editGame(id) {
+      const game = games.find((item) => item.id === Number(id));
+      if (!game) return;
+
+      els.gameId.value = game.id;
+      ['title', 'synopsis', 'version', 'developer', 'tags', 'rating', 'link1', 'link2', 'link3'].forEach((field) => {
+        $(`#${field}`).value = game[field] || '';
+      });
+      els.status.value = game.status;
+      els.gameStatus.value = game.gameStatus || 'em-andamento';
+      els.favorite.checked = Boolean(game.favorite);
+      els.rating.disabled = game.status === 'quero-jogar';
+      els.formTitle.textContent = 'Editar jogo';
+
+      if (game.cover) coverEditor.showThumbnail(game.cover);
+      else coverEditor.reset();
+
+      showTab('add');
+    }
+
+    async function exportData() {
+      return JSON.stringify({ exportedAt: new Date().toISOString(), profile, games }, null, 2);
+    }
+
+    async function downloadBackup() {
+      const backup = await exportData();
+      const blob = new Blob([backup], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'game-shelf-backup.json';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    async function importBackup(file) {
+      const text = await file.text();
+      const backup = JSON.parse(text);
+      if (!Array.isArray(backup.games)) throw new Error('Backup inválido');
+
+      await requestToPromise(store('games', 'readwrite').clear());
+      for (const game of backup.games) {
+        await requestToPromise(store('games', 'readwrite').put(game));
+      }
+
+      profile = sanitizeProfile({ ...profile, ...(backup.profile || {}), id: 'me' });
+      await saveProfile();
+      await loadData();
+      render();
+    }
+
+    function bindEvents() {
+      const openSortSheet = () => {
+        els.sortOverlay.classList.add('open');
+        els.sortSheet.classList.add('open');
+      };
+      const closeSortSheet = () => {
+        els.sortOverlay.classList.remove('open');
+        els.sortSheet.classList.remove('open');
+      };
+
+      document.body.addEventListener('click', async (event) => {
+        const tabButton = event.target.closest('[data-tab]');
+        if (tabButton) { showTab(tabButton.dataset.tab); return; }
+
+        const listTabButton = event.target.closest('[data-list-tab]');
+        if (listTabButton) { activeListTab = listTabButton.dataset.listTab; renderList(); return; }
+
+        if (event.target.closest('#listSortBtn, #homeSortBtn')) { openSortSheet(); return; }
+
+        const sortOption = event.target.closest('.bottom-sheet-option[data-sort]');
+        if (sortOption) {
+          activeListSort = sortOption.dataset.sort;
+          closeSortSheet();
+          render();
+          return;
+        }
+
+        if (event.target.closest('.bottom-sheet-overlay')) { closeSortSheet(); return; }
+
+        const coverNudge = event.target.closest('[data-cover-nudge]');
+        if (coverNudge) { coverEditor.nudge(coverNudge.dataset.coverNudge); return; }
+
+        const bannerNudge = event.target.closest('[data-banner-nudge]');
+        if (bannerNudge) { bannerEditor.nudge(bannerNudge.dataset.bannerNudge); return; }
+
+        const detailCard = event.target.closest('[data-open-detail]');
+        if (detailCard) { showDetail(detailCard.dataset.openDetail); return; }
+
+        if (event.target.closest('#editProfileBtn')) {
+          els.profileHeader.style.display = 'none';
+          els.profileEditPanel.style.display = 'block';
+          els.profileName.value = profile.name || '';
+          if (profile.banner) bannerEditor.showEditor(profile.banner);
+          return;
+        }
+
+        if (event.target.closest('#cancelProfileEdit')) {
+          els.profileHeader.style.display = 'block';
+          els.profileEditPanel.style.display = 'none';
+          bannerEditor.reset();
+          return;
+        }
+
+        const statusOption = event.target.closest('[data-detail-status]');
+        if (statusOption) {
+          await updateDetailGame({ status: statusOption.dataset.detailStatus });
+          return;
+        }
+
+        const ratingOption = event.target.closest('[data-detail-rating]');
+        if (ratingOption) {
+          const game = activeDetailGame();
+          const selected = Number(ratingOption.dataset.detailRating);
+          const current = Number(game?.rating) || 0;
+          const rating = current === selected ? selected - 0.5 : selected;
+          await updateDetailGame({ rating: String(rating) });
+          els.ratingWidget.classList.add('open');
+          return;
+        }
+
+        if (!event.target.closest('#statusWidget') && !event.target.closest('#detailStatus')) {
+          els.statusWidget.classList.remove('open');
+        }
+        if (!event.target.closest('#ratingWidget') && !event.target.closest('#detailRating')) {
+          els.ratingWidget.classList.remove('open');
+        }
+        if (!event.target.closest('#tagsWidget') && !event.target.closest('#detailTags')) {
+          els.tagsWidget.classList.remove('open');
+        }
+      });
+
+      els.searchInput.addEventListener('input', debounce(renderHome, 150));
+      els.listSearchInput.addEventListener('input', debounce(renderList, 150));
+
+      els.detailBack.addEventListener('click', () => goBack());
+      els.detailEdit.addEventListener('click', () => {
+        const game = activeDetailGame();
+        if (game) editGame(game.id);
+      });
+      els.detailDelete.addEventListener('click', async () => {
+        const game = activeDetailGame();
+        if (game && confirm('Excluir este jogo?')) {
+          await deleteGame(game.id);
+          activeDetailGameId = null;
+          showTab('home');
+        }
+      });
+      els.detailEditBanner.addEventListener('click', () => els.detailBannerFile.click());
+      els.detailBannerFile.addEventListener('change', async (event) => {
+        const banner = await fileToDataUrl(event.target.files[0]);
+        if (banner) await updateDetailGame({ banner });
+      });
+
+      const widgetTriggers = [
+        ['detailRating', 'ratingWidget'],
+        ['detailStatus', 'statusWidget'],
+        ['detailTags', 'tagsWidget']
+      ];
+      for (const [buttonId, widgetId] of widgetTriggers) {
+        $(`#${buttonId}`).addEventListener('click', () => {
+          ['statusWidget', 'ratingWidget', 'tagsWidget'].forEach((id) => {
+            $(`#${id}`).classList.toggle('open', id === widgetId);
+          });
+        });
+      }
+
+      els.detailFavorite.addEventListener('click', async () => {
+        const game = activeDetailGame();
+        if (game) await updateDetailGame({ favorite: !game.favorite });
+      });
+
+      els.cover.addEventListener('change', async (event) => {
+        const image = await fileToDataUrl(event.target.files[0]);
+        if (image) coverEditor.showEditor(image, { markDirty: true });
+      });
+
+      els.coverThumbnail.addEventListener('click', () => coverEditor.openEditor());
+
+      els.chooseCoverAgain.addEventListener('click', () => els.cover.click());
+      els.coverReset.addEventListener('click', () => {
+        coverEditor.resetControls();
+        coverEditor.updatePreview();
+      });
+
+      els.bannerFile.addEventListener('change', async (event) => {
+        const image = await fileToDataUrl(event.target.files[0]);
+        if (image) bannerEditor.showEditor(image, { markDirty: true });
+      });
+
+      els.chooseBannerAgain.addEventListener('click', () => els.bannerFile.click());
+      els.bannerReset.addEventListener('click', () => {
+        bannerEditor.resetControls();
+        bannerEditor.updatePreview();
+      });
+
+      els.gameForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const id = els.gameId.value ? Number(els.gameId.value) : undefined;
+        const oldGame = games.find((game) => game.id === id) || {};
+        const cover = coverEditor.isDirty() ? await coverEditor.toDataUrl() : oldGame.cover || '';
+
+        const game = {
+          title: $('#title').value.trim(),
+          cover,
+          synopsis: $('#synopsis').value.trim(),
+          version: $('#version').value.trim(),
+          developer: $('#developer').value.trim(),
+          tags: $('#tags').value.trim(),
+          rating: $('#rating').value,
+          link1: $('#link1').value.trim(),
+          link2: $('#link2').value.trim(),
+          link3: $('#link3').value.trim(),
+          status: $('#status').value,
+          gameStatus: $('#gameStatus').value,
+          favorite: $('#favorite').checked,
+          banner: oldGame.banner || '',
+          createdAt: oldGame.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (id) game.id = id;
+        await saveGame(game);
+
+        resetForm();
+        showTab('home');
+      });
+
+      els.clearForm.addEventListener('click', resetForm);
+
+      els.status.addEventListener('change', () => {
+        const isQueroJogar = $('#status').value === 'quero-jogar';
+        $('#rating').disabled = isQueroJogar;
+        if (isQueroJogar) $('#rating').value = '';
+      });
+
+      els.profileForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        profile.name = $('#profileName').value.trim() || 'M+';
+
+        const avatarFile = $('#avatarFile').files[0];
+        if (avatarFile) profile.avatar = await fileToDataUrl(avatarFile);
+
+        if (bannerEditor.isDirty()) {
+          profile.banner = await bannerEditor.toDataUrl();
+        } else if ($('#bannerFile').files[0]) {
+          profile.banner = await fileToDataUrl($('#bannerFile').files[0]);
+        }
+
+        await saveProfile();
+        await loadData();
+        render();
+      });
+
+      els.exportBackup.addEventListener('click', downloadBackup);
+      els.importBackupBtn.addEventListener('click', () => els.importBackupFile.click());
+      els.importBackupFile.addEventListener('change', async (event) => {
+        if (!event.target.files[0]) return;
+        if (!confirm('Importar este backup e substituir os dados atuais?')) return;
+        try {
+          await importBackup(event.target.files[0]);
+          els.backupStatus.textContent = 'Backup importado.';
+        } catch {
+          els.backupStatus.textContent = 'Arquivo de backup inválido.';
+        }
+      });
+    }
+
+    function showExitToast() {
+      if (exitToast) return;
+      exitToast = document.createElement('div');
+      exitToast.textContent = 'Pressione novamente para sair';
+      exitToast.style.cssText = `
+        position: fixed;
+        bottom: 90px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease;
+      `;
+      document.body.appendChild(exitToast);
+      setTimeout(() => {
+        if (exitToast) { exitToast.remove(); exitToast = null; }
+      }, 2000);
+    }
+
+    function handleExit() {
+      const now = Date.now();
+      if (now - backPressTime < 2000) {
+        navigator.app?.exitApp?.();
+        window.close();
+      } else {
+        backPressTime = now;
+        showExitToast();
+      }
+    }
+
+    async function init() {
+      db = await openDatabase();
+      await loadData();
+      render();
+      bindEvents();
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+
+      history.pushState(null, '', location.href);
+
+      window.addEventListener('popstate', () => {
+        history.pushState(null, '', location.href);
+        if (navHistory.length > 1) goBack();
+        else handleExit();
+      });
+
+      document.addEventListener('backbutton', () => {
+        if (navHistory.length > 1) goBack();
+        else handleExit();
+      }, false);
+    }
+
+    init();
+  </script>
+</body>
+</html>
